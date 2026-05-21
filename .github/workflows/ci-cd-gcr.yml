@@ -1,4 +1,4 @@
-name: CI/CD → Google Artifact Registry (Простий)
+name: CI/CD → Google Artifact Registry
 
 on:
   push:
