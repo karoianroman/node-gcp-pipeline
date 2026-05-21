@@ -18,19 +18,19 @@ jobs:
   # 1. Етап Тестування
   # ─────────────────────────────────────────
   test:
-    name: 🧪 Тести
+    name: 🧪 Tests
     runs-on: ubuntu-latest
     steps:
-      - name: Отримати код
+      - name: Get code
         uses: actions/checkout@v4
 
-      - name: Налаштувати Node.js
+      - name: Settings Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
 
-      - name: Встановити залежності та протестувати
+      - name: Install dependencies and testing
         run: |
           npm ci
           npm test
@@ -45,24 +45,24 @@ jobs:
   # 2. Етап Збірки та Пушу (тільки для push)
   # ─────────────────────────────────────────
   build-and-push:
-    name: 🐳 Збірка та Пуш
+    name: 🐳 Build and Push
     runs-on: ubuntu-latest
     needs: test
 
     steps:
-      - name: Отримати код
+      - name: Get code
         uses: actions/checkout@v4
 
-      - name: Авторизація в Google Cloud
+      - name: Autorization on Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Налаштувати Docker для GCP
+      - name: Settings Docker for GCP
         run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
 
-      - name: Зібрати та запушити Docker-образ
+      - name: Build and Push Docker-image
         run: |
           # Використовуємо один залізобетонний тег: повний SHA коміту
           IMAGE_TAG="europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/app/app:${{ github.sha }}"
@@ -74,19 +74,19 @@ jobs:
   # 3. Етап Деплою (тільки для гілки main)
   # ─────────────────────────────────────────
   deploy:
-    name: 🚀 Деплой у Cloud Run
+    name: 🚀 Deploy to Cloud Run
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Авторизація в Google Cloud
+      - name: Autorization on Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Задеплоїти у Cloud Run
+      - name: Deploy to Cloud Run
         id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
@@ -96,5 +96,5 @@ jobs:
           image: europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/app/app:${{ github.sha }}
           flags: '--allow-unauthenticated'
 
-      - name: Вивести URL
-        run: echo "✅ Задеплоєно на ${{ steps.deploy.outputs.url }}"
+      - name: Output URL
+        run: echo "✅ Deployed on ${{ steps.deploy.outputs.url }}"
